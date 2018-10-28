@@ -8,15 +8,15 @@
             var ParticleFlux = [];
             var m = true;
             var v = true;
-            var ParticleStep = 1;
+            var ParticleStep = 0.5;
             var FluxStep = 0.1;
 
 
             var scene = new THREE.Scene();
             var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
-            camera.rotation.y = -Math.PI;
-           // camera.position.x = 5;
-           //S camera.position.y = 2;
+            camera.rotation.y = -Math.PI/2 - DtoR(45);
+            camera.position.x = 5;
+            camera.position.y = 2;
             camera.position.z = -2;
             scene.background = new THREE.Color('rgb(192,214,228)');
              
@@ -42,7 +42,7 @@
             
 
             var raycaster = new THREE.Raycaster();
-            var RayOrigin = new THREE.Vector3(  0, 0, 0 );
+            var RayOrigin = new THREE.Vector3(  0.5, 0, 0 );
             var dir = new THREE.Vector3(  0, 0, 1 );
             dir.normalize()
             raycaster.set(RayOrigin, dir);
@@ -64,8 +64,8 @@
             var material = new THREE.MeshBasicMaterial( {color: 0x40ff01, side: THREE.DoubleSide, transparent: true, opacity: 0.5} );
             var emitter = new THREE.Mesh( geometry, material );
             scene.add( emitter);
+            emitter.rotation = new THREE.Vector3(0,0,0);
             
-            emitterBB = new THREE.Box3().setFromObject(emitter);
             
             var geometry = new THREE.PlaneGeometry( widthEmitter +1, heightEmitter +1, 32 );
             var material = new THREE.MeshBasicMaterial( {color: 0x40ff01, side: THREE.DoubleSide, transparent: true, opacity: 0.5} );
@@ -76,7 +76,7 @@
             endObject.push(endReceiver);
 
             var initalPos = new THREE.Vector3(-widthEmitter/2, heightEmitter/2, 0);
-            RayOrigin.copy(initalPos);
+            //RayOrigin.copy(initalPos);
 
 			var animate = function () {
 				requestAnimationFrame( animate );
@@ -106,20 +106,22 @@
                 
                  if(m){
                     
-                    if(RayOrigin.x <= widthEmitter/2 && RayOrigin.y  >= -heightEmitter/2  ){
-                        CollisionPoint(RayOrigin); 
-                    }
-                    if(RayOrigin.x > widthEmitter/2){
-                        RayOrigin.x = -widthEmitter/2;
-                        RayOrigin.y -= FluxStep;
-                    }
-                    if(RayOrigin.y < -heightEmitter/2){
-                        m = false;
-                    }else{
-                        RayOrigin.x += FluxStep -0.05;
-                    }
-
-                 }
+                //     if(RayOrigin.x <= widthEmitter/2 && RayOrigin.y  >= -heightEmitter/2  ){
+                         CollisionPoint(RayOrigin); 
+                //     }
+                //     if(RayOrigin.x > widthEmitter/2){
+                //         RayOrigin.x = -widthEmitter/2;
+                //         RayOrigin.y -= FluxStep;
+                //     }
+                //     if(RayOrigin.y < -heightEmitter/2){
+                //         
+                //     }else{
+                //         RayOrigin.x += FluxStep;
+                //     }
+                     m = false;
+                  }
+                
+                
             }
 
 
@@ -170,6 +172,19 @@
             function setupParticle(InterPoint){
                 var inv;
 
+                var material = new THREE.LineBasicMaterial({
+                    color:  'rgb(255, 255, 255)'
+                });
+                
+                var geometry = new THREE.Geometry();
+                geometry.vertices.push(
+                    RayOrigin,
+                    InterPoint
+                );
+                
+                var line = new THREE.Line( geometry, material );
+                scene.add( line );
+
                 var VerticalVect = createVerticalVector();
                 var HorizontalVect = createHorizontalVector();
                     
@@ -213,34 +228,6 @@
                     vtemp1.copy(RayOrigin).sub(InterPoint);
                     VerticalVect = {origin: InterPoint, final: RayOrigin, vector: vtemp1};
                 }
-
-                
-
-            //     var material = new THREE.LineBasicMaterial({
-            //         color:  'rgb(255, 20, 80)'
-            //     });
-                
-            //     var geometry = new THREE.Geometry();
-            //     geometry.vertices.push(
-            //         HorizontalVect.final,
-            //         HorizontalVect.origin
-            //     );
-                
-            //     var line = new THREE.Line( geometry, material );
-            //     //scene.add( line );
-
-            //     var material = new THREE.LineBasicMaterial({
-            //         color:  'rgb(255, 20, 80)'
-            //     });
-                
-            //     var geometry = new THREE.Geometry();
-            //     geometry.vertices.push(
-            //         VerticalVect.final,
-            //         VerticalVect.origin
-            //     );
-                
-            //     var line = new THREE.Line( geometry, material );
-            //    // scene.add( line );
 
                 var VectorResultant = createResultant(HorizontalVect, angleHorizontal, VerticalVect, angleVertical, InterPoint, inv);
 
@@ -347,8 +334,8 @@
             function createResultant(v1, aH, v2, aV, InterPoint, inv){
                 var vH = v1; 
                 var vV = v2;
-                var a1 = aH.toFixed(2);
-                var a2 = aV.toFixed(2);
+                var a1 = aH;
+                var a2 = aV;
                 // var a1 = Math.round(aH);
                 // var a2 = Math.round(aV);
                 var particula = new THREE.Vector3();
@@ -362,18 +349,26 @@
                 var horizontalDeflectFinal = new THREE.Vector3();
                 horizontalDeflectFinal.copy(InterPoint);
 
+                console.log("angulo: DtoR(90) - a1", RtoD(DtoR(90) - a1));
                 if(( DtoR(90) - a1) > 0){
-                    horizontalDeflectFinal.x += CatetoOpostoHorizontal;
-                    horizontalDeflectFinal.z -= CatetoAdjacenteNORMALHorizontal ;
-                }else{
+                    horizontalDeflectFinal.x += CatetoOpostoHorizontal / ParticleStep;
+                    horizontalDeflectFinal.z -= CatetoAdjacenteNORMALHorizontal / ParticleStep;
+                    console.log("esse");
+                }else if(( DtoR(90) - a1) < 0){
                     if(RayOrigin.x > 0){
-                        horizontalDeflectFinal.x -= CatetoOpostoHorizontal ;
-                        horizontalDeflectFinal.z += CatetoAdjacenteNORMALHorizontal ;
+                        console.log("esse1");
+                        horizontalDeflectFinal.x -= CatetoOpostoHorizontal / ParticleStep;
+                        horizontalDeflectFinal.z += CatetoAdjacenteNORMALHorizontal / ParticleStep;
                     }else{
-                        horizontalDeflectFinal.x += CatetoOpostoHorizontal;
-                        horizontalDeflectFinal.z -= CatetoAdjacenteNORMALHorizontal;
+                        console.log("esse12");
+                        horizontalDeflectFinal.x += CatetoOpostoHorizontal / ParticleStep;
+                        horizontalDeflectFinal.z -= CatetoAdjacenteNORMALHorizontal / ParticleStep;
                     }
+                }else{
+                    horizontalDeflectFinal.x = InterPoint.x;
+                    horizontalDeflectFinal.z -= CatetoAdjacenteNORMALHorizontal / ParticleStep;
                 }
+                
                 horizontalDeflectFinal.y = RayOrigin.y;
 
                 var horizontalDeflectVector = new THREE.Vector3();
@@ -384,21 +379,27 @@
                 var CatetoAdjacenteNORMALVertical = (particula.length() * Math.cos( DtoR(90) - a2));
 
                 var CatetoOpostoVertical = (particula.length() * Math.sin( DtoR(90) - a2));
-                
+                console.log("angulo vertical:  a2", RtoD(DtoR(90) - a2));
                 var verticalDeflectFinal = new THREE.Vector3();
                 verticalDeflectFinal.copy(InterPoint);                
 
                 if(( DtoR(90) - a2) > 0){
-                    verticalDeflectFinal.z += CatetoOpostoVertical ;
-                    verticalDeflectFinal.y += CatetoAdjacenteNORMALVertical ;
+                    verticalDeflectFinal.z += CatetoOpostoVertical / ParticleStep;
+                    verticalDeflectFinal.y += CatetoAdjacenteNORMALVertical / ParticleStep;
+                    console.log("esseV");
                 }else if(( DtoR(90) - a2) < 0){
                     if(RayOrigin.x > 0){
-                        verticalDeflectFinal.z -= CatetoOpostoVertical 
-                        verticalDeflectFinal.y -=CatetoAdjacenteNORMALVertical;
+                        verticalDeflectFinal.z -= CatetoOpostoVertical / ParticleStep;
+                        verticalDeflectFinal.y -=CatetoAdjacenteNORMALVertical/ ParticleStep;
+                        console.log("esseV1");
                     }else{
-                        verticalDeflectFinal.z -= CatetoOpostoVertical;
-                        verticalDeflectFinal.y -= CatetoAdjacenteNORMALVertical;
+                        console.log("esseV12");
+                        verticalDeflectFinal.z -= CatetoOpostoVertical / ParticleStep;
+                        verticalDeflectFinal.y -= CatetoAdjacenteNORMALVertical / ParticleStep;
                     }
+                }else{
+                    verticalDeflectFinal.z = InterPoint.z;
+                    verticalDeflectFinal.y = InterPoint.y;
                 }
                 verticalDeflectFinal.x = RayOrigin.x;
                 
