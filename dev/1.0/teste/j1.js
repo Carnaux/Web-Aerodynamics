@@ -5,8 +5,11 @@ var endObject = [];
 var intersectedPoint = [];
 var ParticlesArr = [];
 var ParticleMesh = [];
-var m = true;
-var v = 0;
+var firstF = true;
+var nextF = 0;
+var pressureV = 0;
+var numberOfPoints = 0;
+
 var step = 8;
 var FluxStep = 0.1;
 
@@ -42,7 +45,6 @@ sphere.position.z += 2;
 objects.push(sphere);
 var bb = new THREE.Box3().setFromObject(sphere);
 objectsBB.push(bb);
-
 
 var raycaster = new THREE.Raycaster();
 var RayOrigin = new THREE.Vector3(0.1, -0.2, 0);
@@ -92,7 +94,7 @@ endObject.push(endReceiver);
 var initalPos = new THREE.Vector3(-widthEmitter / 2, heightEmitter / 2, 0);
 //RayOrigin.copy(initalPos);
 
-var animate = function () {
+var animate = function() {
   requestAnimationFrame(animate);
 
   controls.update();
@@ -114,10 +116,13 @@ function RtoD(n) {
 }
 
 function GenerateTunel() {
-  if (m) {
+  if (firstF) {
     //     if(RayOrigin.x <= widthEmitter/2 && RayOrigin.y  >= -heightEmitter/2  ){
     CollisionPoint(RayOrigin);
-    console.log(ParticlesArr);
+
+    RayOrigin.x += 0.05;
+
+    CollisionPoint(RayOrigin);
     //     }
     //     if(RayOrigin.x > widthEmitter/2){
     //         RayOrigin.x = -widthEmitter/2;
@@ -128,15 +133,14 @@ function GenerateTunel() {
     //     }else{
     //         RayOrigin.x += FluxStep;
     //     }
-    m = false;
-  } else if (v < 10) {
-
-    console.log(v);
+    firstF = false;
+  } else if (nextF < 20) {
     nextFlow();
-    v++;
-
+    nextF++;
+  } else if (pressureV != 1) {
+    pressureVerification();
+    pressureV++;
   }
-
 }
 
 function CollisionPoint(p) {
@@ -148,28 +152,38 @@ function CollisionPoint(p) {
   var notIntersect = raycaster.intersectObjects(endObject);
 
   if (intersects.length > 0) {
-    for (var i = 0; i < intersects.length; i++) {
-      InterPoint = intersects[i].point;
-    }
+    InterPoint = intersects[0].point;
     var particle = setupParticle(InterPoint);
   } else {
     for (var i = 0; i < notIntersect.length; i++) {
-      var points1 = [RayOrigin, notIntersect[i].point];
+      var points1 = [RayOrigin, notIntersect[0].point];
 
       var line = new THREE.Line(geometry, material);
       scene.add(line);
 
       var material = new THREE.LineBasicMaterial({
-        color: "rgb(255, 0, 0)"
+        color: "rgb(0, 255, 0)"
       });
 
       var geometry = new THREE.Geometry();
-      geometry.vertices.push(RayOrigin, notIntersect[i].point);
+      geometry.vertices.push(RayOrigin, notIntersect[0].point);
 
       var line = new THREE.Line(geometry, material);
-      //scene.add( line );
+      line.visible = false;
+      scene.add(line);
 
-      var particle = { line: line, points: points1 };
+      var pressurePoints = [];
+      pressurePoints.push("N");
+      pressurePoints.push("N");
+
+      var particle = {
+        line: line,
+        points: points1,
+        velocity: 24,
+        final: notIntersect[0].point,
+        hitobject: false,
+        pressurePoints: pressurePoints
+      };
       ParticlesArr.push(particle);
     }
   }
@@ -383,17 +397,16 @@ function createResultant(v1, aH, v2, aV, InterPoint, inv) {
   var angleAux1 = DtoR(90) - a1;
   var otherAngle1 = angleAux1.toFixed(2);
   if (otherAngle1 > 0) {
-    console.log("horizontal DtoR(90) - a1 > 0")
+    console.log("horizontal DtoR(90) - a1 > 0");
     horizontalDeflectFinal.x += CatetoOpostoHorizontal;
     horizontalDeflectFinal.z -= CatetoAdjacenteNORMALHorizontal;
   } else {
-
     if (RayOrigin.x > 0) {
-      console.log("horizontal DtoR(90) - a1 > 0 e RayOrigin.x > 0")
+      console.log("horizontal DtoR(90) - a1 > 0 e RayOrigin.x > 0");
       horizontalDeflectFinal.x -= CatetoOpostoHorizontal;
       horizontalDeflectFinal.z -= CatetoAdjacenteNORMALHorizontal;
     } else {
-      console.log("horizontal DtoR(90) - a1 > 0 e else")
+      console.log("horizontal DtoR(90) - a1 > 0 e else");
       horizontalDeflectFinal.x += CatetoOpostoHorizontal;
       horizontalDeflectFinal.z -= CatetoAdjacenteNORMALHorizontal;
     }
@@ -416,18 +429,18 @@ function createResultant(v1, aH, v2, aV, InterPoint, inv) {
 
   var angleAux = DtoR(90) - a2;
   var otherAngle = angleAux.toFixed(2);
-  console.log("aaa", otherAngle)
+  console.log("aaa", otherAngle);
   if (otherAngle > 0) {
-    console.log("vertical DtoR(90) - a1 > 0")
+    console.log("vertical DtoR(90) - a1 > 0");
     verticalDeflectFinal.z += CatetoOpostoVertical;
     verticalDeflectFinal.y += CatetoAdjacenteNORMALVertical;
   } else {
     if (RayOrigin.y > 0) {
-      console.log("horizontal DtoR(90) - a1 > 0 e RayOrigin.y > 0")
+      console.log("horizontal DtoR(90) - a1 > 0 e RayOrigin.y > 0");
       verticalDeflectFinal.z -= CatetoOpostoVertical;
       verticalDeflectFinal.y += CatetoAdjacenteNORMALVertical;
     } else {
-      console.log("horizontal DtoR(90) - a1 > 0 e else")
+      console.log("horizontal DtoR(90) - a1 > 0 e else");
       verticalDeflectFinal.z -= CatetoOpostoVertical;
       verticalDeflectFinal.y -= CatetoAdjacenteNORMALVertical;
     }
@@ -466,6 +479,10 @@ function createResultant(v1, aH, v2, aV, InterPoint, inv) {
 
   var points1 = [RayOrigin, InterPoint, FinalPoint];
 
+  var pressurePoints = [];
+  pressurePoints.push("N");
+  pressurePoints.push("H");
+
   var Resultant = {
     line: line,
     points: points1,
@@ -473,7 +490,8 @@ function createResultant(v1, aH, v2, aV, InterPoint, inv) {
     velocity: 24,
     dir: ResultantNormalized,
     vector: ResultantFinalVector,
-    final: points1[points1.length - 1]
+    final: points1[points1.length - 1],
+    pressurePoints: pressurePoints
   };
 
   var dotGeometry = new THREE.Geometry();
@@ -491,7 +509,6 @@ function createResultant(v1, aH, v2, aV, InterPoint, inv) {
 
 function nextFlow() {
   for (var i = 0; i < ParticlesArr.length; i++) {
-
     // var origintemp = new THREE.Vector3(0, 0, 0);
     // if (par) origintemp.copy(ParticlesArr[i].final);
     // origintemp.z = 0;
@@ -513,7 +530,6 @@ function nextFlow() {
 }
 
 function CollisionResult(par) {
-
   let force = new THREE.Vector3(0, 0, par.velocity);
 
   let forcePointFinal = new THREE.Vector3();
@@ -550,16 +566,13 @@ function CollisionResult(par) {
   let intersects = ray.intersectObjects(objects);
 
   if (intersects.length > 0) {
-    console.log("aqui");
     for (let k = 0; k < intersects.length; k++) {
-
       par.line.geometry.vertices.push(intersects[k].point);
 
       let sizeInter = intersects[k].point.distanceTo(par.final);
       let sizeV = FinalPoint.distanceTo(par.final);
-      console.log("sizeInter: ", sizeInter, "sizeV: ", sizeV)
+
       if (sizeInter < sizeV) {
-        console.log("sizeInter < sizeV");
         let surplusVector = new THREE.Vector3();
         surplusVector.copy(FinalPoint).sub(intersects[k].point);
 
@@ -610,8 +623,6 @@ function CollisionResult(par) {
       }
     }
   } else {
-    console.log("aqui222");
-
     par.dir = ResultantNormalized;
     par.points.push(FinalPoint);
     par.final = FinalPoint;
@@ -627,8 +638,73 @@ function CollisionResult(par) {
     var line = new THREE.Line(geometry, material);
     scene.add(line);
     par.line = line;
+  }
+}
 
+function pressureVerification() {
+  for (let i = 0; i < ParticlesArr.length; i++) {
+    for (let j = 2; j < ParticlesArr[i].points.length; j++) {
+      console.log("aqui");
+      let pointOfAnalysis = new THREE.Vector3();
+      let nextPoint = new THREE.Vector3();
+      let particleDir = new THREE.Vector3();
+      let normalFinal = new THREE.Vector3();
 
+      if (ParticlesArr[i].points[j + 1] != undefined) {
+        console.log("aqui2");
+        pointOfAnalysis.copy(ParticlesArr[i].points[j]);
+        nextPoint.copy(ParticlesArr[i].points[j + 1]);
 
+        particleDir
+          .copy(nextPoint)
+          .sub(pointOfAnalysis)
+          .normalize();
+
+        let z2 = (-particleDir.x - particleDir.y) / particleDir.z;
+
+        let normalVector = new THREE.Vector3(1, 1, z2);
+        normalVector.normalize();
+
+        normalFinal.copy(pointOfAnalysis).add(normalVector);
+
+        let center = new THREE.Vector3();
+        center.copy(pointOfAnalysis);
+
+        for (let k = 0; k < ParticlesArr.length; k++) {
+          for (let t = 2; t < ParticlesArr[k].points.length; t++) {
+            console.log("aqui3");
+            let p = new THREE.Vector3();
+            p.copy(ParticlesArr[k].points[t]);
+
+            let crossPow =
+              Math.pow(p.x - center.x, 2) +
+              Math.pow(p.y - center.y, 2) +
+              Math.pow(p.z - center.z, 2);
+
+            let samePlane =
+              (p.x - center.x, 2) * normalVector.x +
+              (p.y - center.y, 2) * normalVector.y +
+              (p.z - center.z, 2) * normalVector.z;
+
+            if (crossPow <= FluxStep) {
+              console.log("dentro do circulo");
+            }
+            if (samePlane === 0) {
+              console.log("dentro do plano");
+            }
+
+            if (crossPow <= FluxStep && samePlane === 0) {
+              console.log("aqui4");
+              numberOfPoints++;
+            }
+          }
+        }
+      }
+      if (numberOfPoints > 1) {
+        ParticlesArr[i].pressurePoints[j] = "Hb";
+      }
+    }
+    numberOfPoints = 0;
+    console.log("pressure", ParticlesArr[i].pressurePoints);
   }
 }

@@ -1,0 +1,3 @@
+https://stackoverflow.com/questions/750032/reading-file-contents-on-the-client-side-in-javascript-in-various-browsers
+
+https://codepen.io/shahrin14/pen/VzvPdB?editors=1010

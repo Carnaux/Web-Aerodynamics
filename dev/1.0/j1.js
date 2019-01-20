@@ -5,10 +5,15 @@ var endObject = [];
 var intersectedPoint = [];
 var ParticlesArr = [];
 var ParticleMesh = [];
-var m = true;
-var v = 0;
+var firstF = true;
+var nextF = 0;
+var pressureV = 0;
+
 var step = 8;
 var FluxStep = 0.1;
+
+var normals = [];
+var normal = [];
 
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(
@@ -29,9 +34,11 @@ var controls = new THREE.OrbitControls(camera, renderer.domElement);
 
 var axesHelper = new THREE.AxesHelper(0.5);
 scene.add(axesHelper);
-//var geometry = new THREE.CubeGeometry(1, 1, 1);
-var geometry = new THREE.SphereGeometry(1, 32, 32);
-var material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+var geometry = new THREE.CubeGeometry(1, 1, 1);
+//var geometry = new THREE.SphereGeometry(1, 32, 32);
+var material = new THREE.MeshBasicMaterial({
+  color: new THREE.Color(63, 63, 63)
+});
 var sphere = new THREE.Mesh(geometry, material);
 scene.add(sphere);
 sphere.position.z += 2;
@@ -88,7 +95,7 @@ endObject.push(endReceiver);
 var initalPos = new THREE.Vector3(-widthEmitter / 2, heightEmitter / 2, 0);
 RayOrigin.copy(initalPos);
 
-var animate = function () {
+var animate = function() {
   requestAnimationFrame(animate);
 
   controls.update();
@@ -110,7 +117,7 @@ function RtoD(n) {
 }
 
 function GenerateTunel() {
-  if (m) {
+  if (firstF) {
     if (RayOrigin.x <= widthEmitter / 2 && RayOrigin.y >= -heightEmitter / 2) {
       CollisionPoint(RayOrigin);
     }
@@ -119,18 +126,19 @@ function GenerateTunel() {
       RayOrigin.y -= FluxStep;
     }
     if (RayOrigin.y < -heightEmitter / 2) {
-      m = false;
+      firstF = false;
     } else {
-      RayOrigin.x += FluxStep - 0.05;
+      RayOrigin.x += FluxStep;
     }
-
   } else {
-    if (v != 20) {
+    if (nextF != 50) {
       //console.log(ParticlesArr);
       nextFlow();
-      v++;
+      nextF++;
+    } else if (pressureV != 1) {
+      pressureVerification();
+      pressureV++;
     }
-
   }
 }
 
@@ -144,29 +152,40 @@ function CollisionPoint(p) {
 
   if (intersects.length > 0) {
     InterPoint = intersects[0].point;
-    // for (var i = 0; i < intersects.length; i++) {
-
-    // }
     setupParticle(InterPoint);
-
   } else {
-
-    var points1 = [RayOrigin, notIntersect[0].point];
+    let origin = new THREE.Vector3();
+    origin.copy(RayOrigin);
+    var points1 = [origin, notIntersect[0].point];
 
     var line = new THREE.Line(geometry, material);
     scene.add(line);
 
     var material = new THREE.LineBasicMaterial({
-      color: "rgb(255, 0, 0)"
+      color: "rgb(0, 255, 0)"
     });
 
     var geometry = new THREE.Geometry();
     geometry.vertices.push(RayOrigin, notIntersect[0].point);
 
-    var line = new THREE.Line(geometry, material);
-    //scene.add( line );
+    geometry.colors = [new THREE.Color(0, 255, 0), new THREE.Color(255, 0, 0)];
 
-    var particle = { line: line, points: points1, velocity: 24, final: undefined };
+    var line = new THREE.Line(geometry, material);
+    line.visible = false;
+    scene.add(line);
+
+    var pressurePoints = [];
+    pressurePoints.push("N");
+    pressurePoints.push("N");
+
+    var particle = {
+      line: line,
+      points: points1,
+      velocity: 24,
+      final: notIntersect[0].point,
+      hitobject: false,
+      pressurePoints: pressurePoints
+    };
     ParticlesArr.push(particle);
   }
   return;
@@ -428,14 +447,22 @@ function createResultant(v1, aH, v2, aV, InterPoint, inv) {
     color: "rgb(125, 0, 30)"
   });
 
+  var initialPoint = new THREE.Vector3();
+  initialPoint.copy(RayOrigin);
+
   var geometry = new THREE.Geometry();
-  geometry.vertices.push(InterPoint, FinalPoint);
-  //geometry.vertices.push(RayOrigin, InterPoint, FinalPoint);
+  //geometry.vertices.push(InterPoint, FinalPoint);
+  geometry.vertices.push(initialPoint, InterPoint, FinalPoint);
+  geometry.colors = [new THREE.Color(0, 255, 0), new THREE.Color(255, 0, 0)];
   var line = new THREE.Line(geometry, material);
   scene.add(line);
 
-  var points1 = [InterPoint, FinalPoint];
-  //var points1 = [RayOrigin, InterPoint, FinalPoint];
+  //var points1 = [InterPoint, FinalPoint];
+  var points1 = [initialPoint, InterPoint, FinalPoint];
+
+  var pressurePoints = [];
+  pressurePoints.push("N");
+  pressurePoints.push("N");
 
   var Resultant = {
     line: line,
@@ -444,7 +471,8 @@ function createResultant(v1, aH, v2, aV, InterPoint, inv) {
     velocity: 24,
     dir: ResultantNormalized,
     vector: ResultantFinalVector,
-    final: points1[points1.length - 1]
+    final: points1[points1.length - 1],
+    pressurePoints: pressurePoints
   };
 
   var dotGeometry = new THREE.Geometry();
@@ -458,38 +486,16 @@ function createResultant(v1, aH, v2, aV, InterPoint, inv) {
 
   ParticleMesh.push(dot);
   ParticlesArr.push(Resultant);
-
 }
 
 function nextFlow() {
-  //console.log(ParticlesArr);
-  for (var i = 0; i < ParticlesArr.length; i++) {
-
-    // var origintemp = new THREE.Vector3(0, 0, 0);
-    // if (par) origintemp.copy(ParticlesArr[i].final);
-    // origintemp.z = 0;
-    // var raya = new THREE.Raycaster();
-    // var dir = new THREE.Vector3(0, 0, 1);
-    // dir.normalize();
-    // raya.set(origintemp, dir);
-
-    // var intersects2 = raya.intersectObjects(ParticleMesh);
-
-    // for (var j = 0; j < intersects2.length; j++) {
-    //   if (intersects2.length > 0) {
+  for (let i = 0; i < ParticlesArr.length; i++) {
     CollisionResult(ParticlesArr[i]);
-    //     console.log("Ponto", ParticlesArr[0].final);
-    //     console.log("achou o ponto", intersects2[j].point);
-    //   }
-    // }
   }
 }
 
 function CollisionResult(par) {
-  //console.log(par);
-
-  if (par.final != undefined) {
-
+  if (par.hitobject != false) {
     let force = new THREE.Vector3(0, 0, par.velocity);
 
     let forcePointFinal = new THREE.Vector3();
@@ -526,16 +532,13 @@ function CollisionResult(par) {
     let intersects = ray.intersectObjects(objects);
 
     if (intersects.length > 0) {
-
       for (let k = 0; k < intersects.length; k++) {
-
         par.line.geometry.vertices.push(intersects[k].point);
 
         let sizeInter = intersects[k].point.distanceTo(par.final);
         let sizeV = FinalPoint.distanceTo(par.final);
 
         if (sizeInter < sizeV) {
-
           let surplusVector = new THREE.Vector3();
           surplusVector.copy(FinalPoint).sub(intersects[k].point);
 
@@ -552,66 +555,290 @@ function CollisionResult(par) {
           let normalizeDir = new THREE.Vector3();
           normalizeDir.copy(newDir).normalize();
 
-          // var initialPoint = new THREE.Vector3();
-          // initialPoint.copy(par.points[0]);
           par.dir = normalizeDir;
           par.points.push(catetoOpostoFinal);
           par.final = catetoOpostoFinal;
 
           scene.remove(par.line);
-          var material = new THREE.LineBasicMaterial({
+          let material = new THREE.LineBasicMaterial({
             color: "rgb(125, 0, 30)"
           });
-          var geometry = new THREE.Geometry();
+          let geometry = new THREE.Geometry();
           for (let b = 0; b < par.points.length; b++) {
             geometry.vertices.push(par.points[b]);
           }
-          // geometry.vertices[0] = initialPoint;
-          var line = new THREE.Line(geometry, material);
+          geometry.colors = [
+            new THREE.Color(0, 255, 0),
+            new THREE.Color(255, 0, 0)
+          ];
+          let line = new THREE.Line(geometry, material);
+
           scene.add(line);
           par.line = line;
         } else {
-          // var initialPoint = new THREE.Vector3();
-          // initialPoint.copy(par.points[0]);
           par.dir = ResultantNormalized;
           par.points.push(FinalPoint);
           par.final = FinalPoint;
 
           scene.remove(par.line);
-          var material = new THREE.LineBasicMaterial({
+          let material = new THREE.LineBasicMaterial({
             color: "rgb(125, 0, 30)"
           });
-          var geometry = new THREE.Geometry();
+          let geometry = new THREE.Geometry();
           for (let b = 0; b < par.points.length; b++) {
             geometry.vertices.push(par.points[b]);
           }
-          // geometry.vertices[0] = initialPoint;
-          var line = new THREE.Line(geometry, material);
+          geometry.colors = [
+            new THREE.Color(0, 255, 0),
+            new THREE.Color(255, 0, 0)
+          ];
+          let line = new THREE.Line(geometry, material);
           scene.add(line);
           par.line = line;
         }
       }
     } else {
-
-
       par.dir = ResultantNormalized;
       par.points.push(FinalPoint);
       par.final = FinalPoint;
 
       scene.remove(par.line);
-      var material = new THREE.LineBasicMaterial({
+      let material = new THREE.LineBasicMaterial({
         color: "rgb(125, 0, 30)"
       });
-      var geometry = new THREE.Geometry();
+      let geometry = new THREE.Geometry();
       for (let b = 0; b < par.points.length; b++) {
         geometry.vertices.push(par.points[b]);
       }
-      var line = new THREE.Line(geometry, material);
+      geometry.colors = [
+        new THREE.Color(0, 255, 0),
+        new THREE.Color(255, 0, 0)
+      ];
+      let line = new THREE.Line(geometry, material);
       scene.add(line);
       par.line = line;
-
-
-
     }
   }
+}
+
+function pressureVerification() {
+  let pointOfAnalysis = new THREE.Vector3();
+  let nextPoint = new THREE.Vector3();
+  let particleDir = new THREE.Vector3();
+  let normalFinal = new THREE.Vector3();
+
+  let pointsObj = [];
+  let distances = [];
+
+  for (let i = 0; i < ParticlesArr.length; i++) {
+    for (let j = 2; j < ParticlesArr[i].points.length; j++) {
+      let currentPoint = new THREE.Vector3();
+      currentPoint.copy(ParticlesArr[i].points[j]);
+
+      if (i == 186 && j == 14) {
+        var dotGeometry = new THREE.Geometry();
+        dotGeometry.vertices.push(currentPoint);
+        var dotMaterial = new THREE.PointsMaterial({
+          color: "rgb(60,60,60)",
+          size: 3,
+          sizeAttenuation: false
+        });
+        var dot = new THREE.Points(dotGeometry, dotMaterial);
+        scene.add(dot);
+      }
+
+      for (let k = 0; k < ParticlesArr.length; k++) {
+        for (let t = 2; t < ParticlesArr[k].points.length; t++) {
+          if (i != k) {
+            let temp = new THREE.Vector3();
+            temp.copy(ParticlesArr[k].points[t]);
+
+            let crossPow =
+              Math.pow(temp.x - currentPoint.x, 2) +
+              Math.pow(temp.y - currentPoint.y, 2) +
+              Math.pow(temp.z - currentPoint.z, 2);
+
+            if (crossPow < FluxStep) {
+              let tempObj = {
+                particleIndex: k,
+                pointIndex: t
+              };
+              distances.push(tempObj);
+
+              if (i == 186 && j == 14) {
+                var dotGeometry = new THREE.Geometry();
+                dotGeometry.vertices.push(temp);
+                var dotMaterial = new THREE.PointsMaterial({
+                  size: 3,
+                  sizeAttenuation: false
+                });
+                var dot = new THREE.Points(dotGeometry, dotMaterial);
+                scene.add(dot);
+              }
+            }
+          }
+        }
+      }
+      let obj = {
+        currentIndex: i,
+        currentSubIndex: j,
+        arr: distances
+      };
+      pointsObj.push(obj);
+
+      distances = [];
+    }
+  }
+  console.log(pointsObj);
+
+  for (let i = 0; i < pointsObj.length; i++) {
+    let point = pointsObj[i];
+
+    let tam = point.arr.length;
+
+    let r = Math.trunc(tam / 2);
+    let g = Math.trunc(2 / tam);
+    if (tam == 0) {
+      g = 0;
+    }
+
+    if (r > g) {
+      ParticlesArr[point.currentIndex].pressurePoints[point.currentSubIndex] =
+        "H";
+    } else if (g > r || g == r) {
+      ParticlesArr[point.currentIndex].pressurePoints[point.currentSubIndex] =
+        "N";
+    }
+  }
+
+  for (let i = 0; i < ParticlesArr.length; i++) {
+    let geometry = new THREE.Geometry();
+
+    for (let j = 0; j < ParticlesArr[i].points.length; j++) {
+      geometry.vertices.push(ParticlesArr[i].points[j]);
+    }
+
+    for (let j = 0; j < geometry.vertices.length; j++) {
+      if (ParticlesArr[i].pressurePoints[j] === "H") {
+        geometry.colors[j] = new THREE.Color(255, 0, 0);
+      } else if (ParticlesArr[i].pressurePoints[j] === "N") {
+        geometry.colors[j] = new THREE.Color(0, 255, 0);
+      }
+    }
+
+    let material = new THREE.LineBasicMaterial({
+      linewidth: 1,
+      color: 0xffffff,
+      vertexColors: THREE.VertexColors
+    });
+
+    scene.remove(ParticlesArr[i].line);
+    let line = new THREE.Line(geometry, material);
+    ParticlesArr[i].line = line;
+
+    if (ParticlesArr[i].hitobject == false) {
+      line.visible = false;
+    }
+    scene.add(line);
+  }
+
+  // for (let i = 0; i < ParticlesArr.length; i++) {
+  //   for (let j = 2; j < ParticlesArr[i].points.length; j++) {
+  //     let pointArr = [];
+  //     // let distances = [];
+  //     let currentPoint = new THREE.Vector3();
+  //     currentPoint.copy(ParticlesArr[i].points[j]);
+
+  //     for (let k = 0; k < ParticlesArr.length; k++) {
+  //       for (let t = 2; t < ParticlesArr[k].points.length; t++) {
+  //         if (i != k) {
+  //           let temp = new THREE.Vector3();
+  //           temp.copy(ParticlesArr[k].points[t]);
+
+  //           if (currentPoint.distanceTo(temp) < FluxStep) {
+  //             let obj = {
+  //               particleIndex: k,
+  //               pointIndex: t
+  //             };
+  //             distances.push(obj);
+  //           }
+  //         }
+  //       }
+  //       pointArr.push(distances);
+  //     }
+  //     lineArr.push(pointArr);
+  //   }
+  //   partiArr.push(lineArr);
+  // }
+  // console.log(lineArr);
+  // let geometry = ParticlesArr[186].line.geometry;
+  // for (var j = 0; j < geometry.vertices.length; j++) {
+  //   let tam = partiArr[186][186][j];
+  //   console.log(j, tam);
+  //   //geometry.colors[j] = new THREE.Color(Math.random(), Math.random(), 0);
+  // }
+
+  // for (let i = 0; i < ParticlesArr.length; i++) {
+  //   let geometry = ParticlesArr[i].line.geometry;
+
+  //   for (var j = 0; j < geometry.vertices.length; j++) {
+  //     let tam = partiArr[i][i][j].length;
+  //     console.log(i, j, tam);
+  //     //geometry.colors[j] = new THREE.Color(Math.random(), Math.random(), 0);
+  //   }
+  // }
+
+  //   let rotatingVector = new THREE.Vector3();
+  //   rotatingVector.copy(normalVector);
+  //   for (let k = 0; k < 90; k++) {
+  //     let a = DtoR(k);
+  //     rotatingVector.x =
+  //       rotatingVector.x * Math.cos(a) - rotatingVector.y * Math.sin(a);
+  //     rotatingVector.y =
+  //       rotatingVector.x * Math.sin(a) + rotatingVector.y * Math.cos(a);
+
+  //     var raycasterPressure = new THREE.Raycaster();
+  //     raycasterPressure.set(pointOfAnalysis, rotatingVector);
+
+  //     for (let t = 0; t < ParticlesArr.length; t++) {
+  //       let intersectsPressure = raycasterPressure.intersectObject(
+  //         ParticlesArr[t].line
+  //       );
+  //       if (intersectsPressure > 0) {
+  //         console.log("cai aqui");
+  //       }
+  //       // if (intersectsPressure > 0) {
+  //       //   console.log("cai aqui");
+  //       //   for (let t2 = 0; t2 < 2; t2++) {
+  //       //     let crossPow =
+  //       //       Math.pow(
+  //       //         intersectsPressure[t2].point.x - pointOfAnalysis.x,
+  //       //         2
+  //       //       ) +
+  //       //       Math.pow(
+  //       //         intersectsPressure[t2].point.y - pointOfAnalysis.y,
+  //       //         2
+  //       //       ) +
+  //       //       Math.pow(
+  //       //         intersectsPressure[t2].point.z - pointOfAnalysis.z,
+  //       //         2
+  //       //       );
+
+  //       //     if (crossPow < FluxStep) {
+  //       //       console.log("dentro");
+  //       //     }
+  //       //   }
+  //       // }
+  //     }
+  //   }
+
+  //   let crossPow =
+  //   Math.pow(projectedPoint.x - center.x, 2) +
+  //   Math.pow(projectedPoint.y - center.y, 2) +
+  //   Math.pow(projectedPoint.z - center.z, 2);
+
+  // let samePlane =
+  //   (projectedPoint.x - center.x) * normalVector.x +
+  //   (projectedPoint.y - center.y) * normalVector.y +
+  //   (projectedPoint.z - center.z) * normalVector.z;
 }
