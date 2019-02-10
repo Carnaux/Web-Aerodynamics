@@ -34,6 +34,16 @@ document.body.appendChild(renderer.domElement);
 
 var controls = new THREE.OrbitControls(camera, renderer.domElement);
 
+let dragControls = new THREE.DragControls( objects, camera, renderer.domElement );
+				dragControls.addEventListener( 'dragstart', function () {
+					controls.enabled = false;
+				} );
+				dragControls.addEventListener( 'dragend', function () {
+					controls.enabled = true;
+        } );
+
+window.addEventListener( 'resize', onWindowResize, false );
+
 var axesHelper = new THREE.AxesHelper(0.5);
 scene.add(axesHelper);
 
@@ -104,6 +114,12 @@ var animate = function() {
 
   renderer.render(scene, camera);
 };
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize( window.innerWidth, window.innerHeight );
+}
 
 animate();
 
@@ -851,6 +867,7 @@ function pressureVerification() {
 
 function Start() {
   firstF = true;
+  dragControls.enabled = false;
   console.log("started");
 }
 

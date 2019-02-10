@@ -5,9 +5,11 @@ var endObject = [];
 var intersectedPoint = [];
 var ParticlesArr = [];
 var ParticleMesh = [];
-var firstF = true;
+var firstF = false;
 var nextF = 0;
 var pressureV = 0;
+
+var koko = false;
 
 var step = 8;
 var FluxStep = 0.1;
@@ -16,6 +18,7 @@ var normals = [];
 var normal = [];
 
 var scene = new THREE.Scene();
+scene.background = new THREE.Color("rgb(80,80,80)");
 var camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
@@ -24,7 +27,6 @@ var camera = new THREE.PerspectiveCamera(
 );
 camera.rotation.y = -Math.PI;
 camera.position.z = -2;
-scene.background = new THREE.Color("rgb(192,214,228)");
 
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -32,22 +34,31 @@ document.body.appendChild(renderer.domElement);
 
 var controls = new THREE.OrbitControls(camera, renderer.domElement);
 
+let dragControls = new THREE.DragControls( objects, camera, renderer.domElement );
+				dragControls.addEventListener( 'dragstart', function () {
+					controls.enabled = false;
+				} );
+				dragControls.addEventListener( 'dragend', function () {
+					controls.enabled = true;
+        } );
+
+window.addEventListener( 'resize', onWindowResize, false );
+
 var axesHelper = new THREE.AxesHelper(0.5);
 scene.add(axesHelper);
-var geometry = new THREE.CubeGeometry(1, 1, 1);
-//var geometry = new THREE.SphereGeometry(1, 32, 32);
-var material = new THREE.MeshBasicMaterial({
-  color: new THREE.Color(63, 63, 63)
-});
-var sphere = new THREE.Mesh(geometry, material);
-scene.add(sphere);
-sphere.position.z += 2;
-objects.push(sphere);
-var bb = new THREE.Box3().setFromObject(sphere);
-objectsBB.push(bb);
+
+// var geometry = new THREE.CubeGeometry(0.01, 1, 1);
+// //var geometry = new THREE.SphereGeometry(1, 32, 32);
+// var material = new THREE.MeshBasicMaterial({
+//   color: new THREE.Color(63, 63, 63)
+// });
+// var sphere = new THREE.Mesh(geometry, material);
+// scene.add(sphere);
+// sphere.position.z += 2;
+// objects.push(sphere);
 
 var raycaster = new THREE.Raycaster();
-var RayOrigin = new THREE.Vector3(0, 0, 0);
+var RayOrigin = new THREE.Vector3(00, 0, 0);
 var dir = new THREE.Vector3(0, 0, 1);
 dir.normalize();
 raycaster.set(RayOrigin, dir);
@@ -84,7 +95,7 @@ var material = new THREE.MeshBasicMaterial({
   color: 0x40ff01,
   side: THREE.DoubleSide,
   transparent: true,
-  opacity: 0.5
+  opacity: 0
 });
 var endReceiver = new THREE.Mesh(geometry, material);
 scene.add(endReceiver);
@@ -103,6 +114,12 @@ var animate = function() {
 
   renderer.render(scene, camera);
 };
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize( window.innerWidth, window.innerHeight );
+}
 
 animate();
 
@@ -127,10 +144,11 @@ function GenerateTunel() {
     }
     if (RayOrigin.y < -heightEmitter / 2) {
       firstF = false;
+      koko = true;
     } else {
       RayOrigin.x += FluxStep;
     }
-  } else {
+  } else if (koko) {
     if (nextF != 50) {
       //console.log(ParticlesArr);
       nextFlow();
@@ -153,7 +171,9 @@ function CollisionPoint(p) {
   if (intersects.length > 0) {
     InterPoint = intersects[0].point;
     setupParticle(InterPoint);
+    console.log("colidiu");
   } else {
+    console.log("n colidiu");
     let origin = new THREE.Vector3();
     origin.copy(RayOrigin);
     var points1 = [origin, notIntersect[0].point];
@@ -297,13 +317,14 @@ function createHorizontalVector() {
   OriginNow.copy(RayOrigin);
   var a = new THREE.Vector3();
   var b = new THREE.Vector3();
-
+  //* Math.pow(10, FluxStep * 100)
+  let originStep = 0.0001;
   for (var i = 0; i < 2; i++) {
     if (i == 0) {
       OriginNow.y = 0;
-      OriginNow.x -= 0.01;
+      OriginNow.x -= originStep;
     } else {
-      OriginNow.x += 0.02;
+      OriginNow.x += originStep * 2;
     }
 
     raycaster.set(OriginNow, new THREE.Vector3(0, 0, 1));
@@ -333,12 +354,12 @@ function createVerticalVector() {
 
   var a = new THREE.Vector3();
   var b = new THREE.Vector3();
-
+  let originStep = 0.0001;
   for (var i = 0; i < 2; i++) {
     if (i == 0) {
-      OriginNow.y -= 0.01;
+      OriginNow.y -= originStep;
     } else {
-      OriginNow.y += 0.02;
+      OriginNow.y += originStep * 2;
     }
 
     raycaster.set(OriginNow, dir);
@@ -841,4 +862,60 @@ function pressureVerification() {
   //   (projectedPoint.x - center.x) * normalVector.x +
   //   (projectedPoint.y - center.y) * normalVector.y +
   //   (projectedPoint.z - center.z) * normalVector.z;
+}
+/*------------------------------------------------------------*/
+
+function Start() {
+  firstF = true;
+  dragControls.enabled = false;
+  console.log("started");
+}
+
+/*---------------------FILE LOADER SYSTEM---------------------*/
+function onFileLoad(event) {
+  let modelData = event.target.result;
+
+  let objLoader = new THREE.OBJLoader();
+
+  var geometry = objLoader.parse(modelData);
+  let pos = new THREE.Vector3(0, 0, 12);
+
+  //scene.add(geometry);
+  console.log(geometry);
+  if (geometry.children.length > 0) {
+    for (let i = 0; i < geometry.children.length; i++) {
+      // let obj = new THREE.Mesh();
+      // obj.clone(geometry.children[i]);
+      // console.log(obj);
+      // scene.add(obj);
+      let obj = new THREE.Mesh(
+        geometry.children[i].geometry,
+        geometry.children[i].material
+      );
+      obj.position.copy(pos);
+      scene.add(obj);
+
+      objects.push(obj);
+    }
+  } else {
+    let obj = new THREE.Mesh(geometry.geometry, geometry.material);
+    obj.position.copy(pos);
+    scene.add(obj);
+
+    objects.push(obj);
+  }
+}
+
+function onChooseFile(event, onLoadFileHandler) {
+  if (typeof window.FileReader !== "function")
+    throw "The file API isn't supported on this browser.";
+  let input = event.target;
+  if (!input) throw "The browser does not properly implement the event object";
+  if (!input.files)
+    throw "This browser does not support the `files` property of the file input.";
+  if (!input.files[0]) return undefined;
+  let file = input.files[0];
+  let fr = new FileReader();
+  fr.onload = onLoadFileHandler;
+  fr.readAsText(file);
 }
