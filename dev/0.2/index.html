@@ -1,0 +1,82 @@
+<html>
+  <head>
+    <title>AeroDynamics</title>
+    
+
+    <link type="text/css" rel="stylesheet" href="src/style/style.css"/>
+    <link type="text/css" rel="stylesheet" href="src/style/bootstrap.css"/>
+    
+  </head>
+  <body >
+      
+    
+    <div class="container-fluid">
+       
+
+      <div id="overlay" class="row">
+        
+        <div class="col">
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle load" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <img id="imgBtLoad" src="src/style/icons/load.png"/>
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    <input type="file" id="selectedModel" style="display: none;" onchange="onChooseFile(event, onModelLoad.bind(this))" />
+                    <input type="file" id="selectedMaterial" style="display: none;" onchange="onChooseFile(event, onMaterialLoad.bind(this))" />
+                    <a class="dropdown-item" onclick="document.getElementById('selectedModel').click();" href="#" > 
+                      Load 3D Model</a>
+                    <a class="dropdown-item" onclick="document.getElementById('selectedMaterial').click();" href="#" > 
+                      Load Material</a>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <button type="button" class="btn btn-secondary " onclick="Start()"><img id="imgBtPlay" src="src/style/icons/play.png" /></button>
+        </div>
+        <div class="col">
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <img id="imgBtSettings" src="src/style/icons/gear.png"/>
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                  <a class="dropdown-item" href="#" onclick="genConfigs()">General Configs</a>
+                  <a></a>
+                  
+                </div>
+              </div>
+        </div>
+      </div>
+
+      <div id="renderDiv" class="row">
+        <div id="renderCol" ></div></div>
+      <div id="configs" class="col-2">
+        <div id="generalConfigs">
+          <h3 id="textGenConfigs">General Configs</h3>
+          <div class="input-wrapper">
+              <input id="FluxStep" class="inputNumber" type="number" min="0.03" max="0.5">
+              <label id="FluxStep1" for="FluxStep">FluxStep</label>
+          </div>
+          <div class="input-wrapper2">
+              <input id="nextFlow" class="inputNumber" type="number">
+              <label id="nextFlow1" for="nextFlow">NextFlow</label>
+          </div>
+          <button id="btApplyGeneral" class="btn btn-secondary" type="button" onclick="applyGenConfigs()">Apply</button>
+
+        </div>
+      </div>
+    </div>
+
+
+    
+    <script type="text/javascript" src="src/js/jquery.js"></script>
+    <script type="text/javascript" src="src/js/popper.js"></script>
+    <script type="text/javascript" src="src/style/bootstrap.js"></script>
+    <script type="text/javascript" src="src/js/three/three.js"></script>
+    <script type="text/javascript" src="src/js/three/Orbit.js"></script>
+    <script type="text/javascript" src="src/js/three/MTLLoader.js"></script>
+    <script type="text/javascript" src="src/js/three/OBJLoader.js"></script>
+    <script type="text/javascript" src="src/js/three/transformControls.js"></script>
+    <script type="text/javascript" src="src/js/three/stats.js"></script>
+    <script type="text/javascript" src="src/js/three/j1.js"></script>
+  </body>
+</html>

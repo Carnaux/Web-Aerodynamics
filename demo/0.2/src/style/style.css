@@ -1,0 +1,94 @@
+body{
+    margin: 0;
+    overflow: hidden;
+}
+#overlay{
+    background-color: white;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    position: absolute;
+    left: 40%;
+    width: 300px;
+    height: 50px;
+}
+
+#imgBtLoad{
+    width: 15px;
+    height: 15px;
+}
+
+#imgBtSettings{
+    width: 20px;
+    height: 20px;
+}
+
+
+#playbutton{
+    background-size: 32px 32px;
+    height: 32px;  
+    width: 32px;
+}
+
+#playbutton:focus-visible{
+    outline: none;
+    box-shadow: none;
+}
+
+#configs{
+    position: absolute;
+    right: 0;
+    top: 0;
+    background-color: white;
+    width: 350px;
+    height: 100%;
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+    display: none;
+}
+
+/*--------------------------------------*/
+#textGenConfigs{
+    margin-left: 10px;
+}
+#btApplyGeneral{
+    position: absolute;
+    bottom: 10px;
+    right: 80px;
+}
+
+/* --------------- INPUTS ----------------- */
+.input-wrapper{
+    position: relative;
+    top: 20px;
+}
+.input-wrapper2{
+    position: relative;
+    top: 80px;
+}
+.inputNumber{
+    position: absolute;
+    top: 20px;
+    border-top-style: none;
+    border-left-style: none;
+    border-right-style: none;
+    outline-style: none; 
+    border-bottom-color: rgb(134,142,150);
+}
+label{
+
+    color: rgb(134,142,150);
+    position: absolute;
+    top: 0;
+}
+.inputNumber:focus {
+    border-bottom-color: rgb(0,255,204);
+    
+} 
+.inputNumber:focus ~ #nextFlow1 {
+    
+    color: rgb(0,255,204);
+}
+.inputNumber:focus ~ #FluxStep1 {
+    
+    color: rgb(0,255,204);
+}
