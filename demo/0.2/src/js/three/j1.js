@@ -67,14 +67,6 @@ scene.add(control);
 
 window.addEventListener( 'resize', onWindowResize, false );
 
-let dragControls = new THREE.DragControls( objects, camera, renderer.domElement );
-				dragControls.addEventListener( 'dragstart', function () {
-					controls.enabled = false;
-				} );
-				dragControls.addEventListener( 'dragend', function () {
-					controls.enabled = true;
-        } );
-
 window.addEventListener( 'resize', onWindowResize, false );
 
 var axesHelper = new THREE.AxesHelper(0.5);
@@ -907,7 +899,7 @@ function pressureVerification() {
 
 function Start() {
   firstF = true;
-  document.getElementById('imgBtPlay').src = "icons/loading.png";
+  document.getElementById('imgBtPlay').src = "src/style/icons/loading.png";
   document.getElementById('imgBtPlay').disabled = true;
   if(document.getElementById('configsbtApplyGeneral') != null){
     document.getElementById('configsbtApplyGeneral').disabled = true;
@@ -932,7 +924,7 @@ function applyGenConfigs(){
 }
 
 function end(){
-  document.getElementById('imgBtPlay').src = "icons/ok.png";
+  document.getElementById('imgBtPlay').src = "src/style/icons/ok.png";
   document.getElementById('imgBtPlay').disabled = false;
   if(document.getElementById('configsbtApplyGeneral') != null){
     document.getElementById('configsbtApplyGeneral').disabled = false;
