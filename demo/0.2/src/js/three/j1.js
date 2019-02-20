@@ -151,13 +151,10 @@ var animate = function() {
   render();
 };
 
-<<<<<<< HEAD:demo/0.2/src/js/three/j1.js
 function render(){
   renderer.render(scene, camera);
 }
 
-=======
->>>>>>> f25c6109ed3b75addfe31119813a0ce74a7cec38:demo/1.0/j1.js
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
@@ -910,16 +907,12 @@ function pressureVerification() {
 
 function Start() {
   firstF = true;
-<<<<<<< HEAD:demo/0.2/src/js/three/j1.js
   document.getElementById('imgBtPlay').src = "icons/loading.png";
   document.getElementById('imgBtPlay').disabled = true;
   if(document.getElementById('configsbtApplyGeneral') != null){
     document.getElementById('configsbtApplyGeneral').disabled = true;
   }
   control.enabled = false;
-=======
-  dragControls.enabled = false;
->>>>>>> f25c6109ed3b75addfe31119813a0ce74a7cec38:demo/1.0/j1.js
   console.log("started");
 }
 function genConfigs(){
