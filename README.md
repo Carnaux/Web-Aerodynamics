@@ -5,7 +5,6 @@ Web-Aerodynamics is a {...}
 
 ## Updates
 - Feb 2019: raycast based simulations; obj compability
-- March 2019: online demo; documentation
 -  
 -
 -
