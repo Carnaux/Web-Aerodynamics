@@ -15,7 +15,6 @@ Web-Aerodynamics is a {...}
 | Date       |      features                |  state |
 |------------|:----------------------------:|:-----:|
 | Feb 2019   | raycast based simulations, OBJ import                  |  100% |
-| March 2019 | UI improvement, online demo                 |  50%  |
 | -          | -                |  -    |
 
 
